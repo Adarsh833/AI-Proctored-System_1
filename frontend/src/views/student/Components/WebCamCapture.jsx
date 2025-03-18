@@ -210,38 +210,34 @@ const WebCamCapture = ({ onCapture, onObjectDetected, examId, email, username })
   }, []);
 
   const captureScreenshot = () => {
-    console.log("Capturing screenshot...");
-
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
-
-    // Ensure canvas size matches video size
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
-
     context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-    const imageSrc = canvas.toDataURL('image/png');
-
+  
+    // Convert canvas to PNG or JPEG
+    const imageSrc = canvas.toDataURL('image/jpeg'); // Use 'image/png' for PNG
     onCapture(imageSrc);
-
-    // Prepare form data for sending the screenshot to backend
+  
+    const file = dataURLtoFile(imageSrc, `screenshot_${Date.now()}.jpeg`);
+  
     const formData = new FormData();
-    formData.append('screenshot', dataURLtoBlob(imageSrc));
+    formData.append('screenshot', file);
     formData.append('username', username);
     formData.append('email', email);
     formData.append('examId', examId);
-
+  
     fetch('/api/save-screenshot', {
       method: 'POST',
       body: formData,
     })
       .then(response => response.json())
-      .then(data => console.log('✅ Screenshot saved:', data))
-      .catch(error => console.error('❌ Error saving screenshot:', error));
+      .then(data => console.log('Screenshot saved successfully:', data))
+      .catch(error => console.error('Error saving screenshot:', error));
   };
-
-  const dataURLtoBlob = (dataURL) => {
-    const arr = dataURL.split(',');
+  
+  // Function to convert dataURL to File
+  const dataURLtoFile = (dataUrl, fileName) => {
+    const arr = dataUrl.split(',');
     const mime = arr[0].match(/:(.*?);/)[1];
     const bstr = atob(arr[1]);
     let n = bstr.length;
@@ -249,8 +245,9 @@ const WebCamCapture = ({ onCapture, onObjectDetected, examId, email, username })
     while (n--) {
       u8arr[n] = bstr.charCodeAt(n);
     }
-    return new Blob([u8arr], { type: mime });
+    return new File([u8arr], fileName, { type: mime });
   };
+  
 
   const detectObjects = async () => {
     if (!model || !videoRef.current) return;
