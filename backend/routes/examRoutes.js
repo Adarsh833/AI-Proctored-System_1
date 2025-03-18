@@ -19,4 +19,25 @@ examRoutes.route("/exam/questions/:examId").get(protect, getQuestionsByExamId);
 examRoutes.route("/cheatingLogs/:examId").get(protect, getCheatingLogsByExamId);
 examRoutes.route("/cheatingLogs/").post(protect, saveCheatingLog);
 
+examRoutes.post("/logViolation", async (req, res) => {
+  try {
+    const { studentId, examId, violationType } = req.body;
+
+    const violations = await CheatingLog.find({ studentId, examId });
+
+    if (violations.length >= 3) {
+      // End exam
+      await Exam.findByIdAndUpdate(examId, { status: "terminated" });
+      return res.json({ message: "Exam terminated due to multiple violations." });
+    }
+
+    const newViolation = new CheatingLog({ studentId, examId, violationType });
+    await newViolation.save();
+
+    res.json({ message: "Violation logged successfully." });
+  } catch (error) {
+    res.status(500).json({ error: "Error logging violation" });
+  }
+});
+
 export default examRoutes;

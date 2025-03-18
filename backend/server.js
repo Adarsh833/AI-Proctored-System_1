@@ -5,9 +5,14 @@ import connectDB from "./config/db.js";
 import cookieParser from "cookie-parser";
 import examRoutes from "./routes/examRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import screenshotRoutes from "./routes/screenshotRoutes.js"; // Import the new screenshot routes
 import { exec } from "child_process";
 import fs from "fs";
 import { writeFileSync } from "fs";
+import tabSwitchingMiddleware from "./middleware/tabSwitching.js";
+import path from "path"; // Ensure path is imported
+
+
 dotenv.config();
 connectDB();
 const app = express();
@@ -17,6 +22,17 @@ const port = process.env.PORT || 5000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(tabSwitchingMiddleware);
+// app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploads folder statically
+
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploads folder statically
+
 
 app.post("/run-python", (req, res) => {
   const { code } = req.body; // Get Python code from request body
@@ -57,6 +73,10 @@ app.post("/run-java", (req, res) => {
   });
 });
 
+app.post('api/exams/tab-switch', (req, res)=>{
+  res.status(200).send({message:"Tab switch logged"});
+})
+
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/users", examRoutes);
@@ -78,6 +98,9 @@ if (process.env.NODE_ENV === "production") {
     res.send("<h1>server is running </h1>");
   });
 }
+
+
+app.use('/', screenshotRoutes);
 
 // Custom Middlewares
 app.use(notFound);

@@ -10,11 +10,14 @@ const cheatingLogSchema = new mongoose.Schema(
     examId: { type: String, required: true },
     email: { type: String, required: true },
     username: { type: String, required: true },
+    screenshots: { type: [String], default: [] }
   },
   {
     timestamps: true,
   }
 );
+
+
 
 // Create a model using the schema
 const CheatingLog = mongoose.model("CheatingLog", cheatingLogSchema);

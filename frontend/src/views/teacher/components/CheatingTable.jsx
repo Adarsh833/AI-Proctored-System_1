@@ -22,7 +22,7 @@ export default function CheatingTable() {
   const [cheatingLogs, setCheatingLogs] = useState([]);
 
   const { data: examsData } = useGetExamsQuery();
-  const { data: cheatingLogsData, isLoading } = useGetCheatingLogsQuery(selectedExamId);
+  const { data: cheatingLogsData, isLoading, error } = useGetCheatingLogsQuery(selectedExamId);
 
   useEffect(() => {
     if (examsData && examsData.length > 0) {
@@ -41,6 +41,14 @@ export default function CheatingTable() {
       log.username.toLowerCase().includes(filter.toLowerCase()) ||
       log.email.toLowerCase().includes(filter.toLowerCase()),
   );
+
+  if (isLoading) {
+    return <Typography>Loading...</Typography>;
+  }
+
+  if (error) {
+    return <Typography>Error fetching cheating logs</Typography>;
+  }
 
   return (
     <Box>
@@ -79,6 +87,7 @@ export default function CheatingTable() {
               <TableCell>Multiple Face Count</TableCell>
               <TableCell>Cell Phone Count</TableCell>
               <TableCell>Prohibited Object Count</TableCell>
+              <TableCell>Screenshot</TableCell> {/* New Screenshot Column */}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -91,6 +100,21 @@ export default function CheatingTable() {
                 <TableCell>{log.multipleFaceCount}</TableCell>
                 <TableCell>{log.cellPhoneCount}</TableCell>
                 <TableCell>{log.prohibitedObjectCount}</TableCell>
+                <TableCell>
+                  {log.screenshots && log.screenshots.length > 0 ? (
+                    log.screenshots.map((screenshot, idx) => (
+                      <img 
+                        key={idx} 
+                        src={screenshot} 
+                        alt={`Screenshot of cheating incident ${idx + 1}`} 
+                        style={{ width: '50px', cursor: 'pointer', marginRight: '5px' }} 
+                        onClick={() => window.open(screenshot, '_blank')} 
+                      />
+                    ))
+                  ) : (
+                    <Typography>No Screenshot</Typography>
+                  )}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
