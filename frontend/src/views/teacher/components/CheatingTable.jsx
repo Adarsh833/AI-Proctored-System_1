@@ -32,15 +32,37 @@ export default function CheatingTable() {
 
   useEffect(() => {
     if (cheatingLogsData) {
-      setCheatingLogs(cheatingLogsData);
+      // Ensure cheatingLogsData is an array
+      if (Array.isArray(cheatingLogsData)) {
+        setCheatingLogs(cheatingLogsData);
+      } else {
+        console.error('cheatingLogsData is not an array:', cheatingLogsData);
+        setCheatingLogs([]); // Set to an empty array if the data is invalid
+      }
     }
   }, [cheatingLogsData]);
 
-  const filteredUsers = cheatingLogs.filter(
-    (log) =>
-      log.username.toLowerCase().includes(filter.toLowerCase()) ||
-      log.email.toLowerCase().includes(filter.toLowerCase()),
-  );
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (selectedExamId) {
+        fetch(`/api/cheatingLogs/${selectedExamId}`)
+          .then((res) => res.json())
+          .then((data) => setCheatingLogs(data))
+          .catch((err) => console.error('Error fetching cheating logs:', err));
+      }
+    }, 5000); // Poll every 5 seconds
+  
+    return () => clearInterval(interval);
+  }, [selectedExamId]);  
+
+  // Filter logs based on username or email
+  const filteredUsers = Array.isArray(cheatingLogs)
+    ? cheatingLogs.filter(
+        (log) =>
+          log.username.toLowerCase().includes(filter.toLowerCase()) ||
+          log.email.toLowerCase().includes(filter.toLowerCase())
+      )
+    : [];
 
   if (isLoading) {
     return <Typography>Loading...</Typography>;
@@ -87,7 +109,7 @@ export default function CheatingTable() {
               <TableCell>Multiple Face Count</TableCell>
               <TableCell>Cell Phone Count</TableCell>
               <TableCell>Prohibited Object Count</TableCell>
-              <TableCell>Screenshot</TableCell> {/* New Screenshot Column */}
+              <TableCell>Screenshot</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -103,12 +125,12 @@ export default function CheatingTable() {
                 <TableCell>
                   {log.screenshots && log.screenshots.length > 0 ? (
                     log.screenshots.map((screenshot, idx) => (
-                      <img 
-                        key={idx} 
-                        src={screenshot} 
-                        alt={`Screenshot of cheating incident ${idx + 1}`} 
-                        style={{ width: '50px', cursor: 'pointer', marginRight: '5px' }} 
-                        onClick={() => window.open(screenshot, '_blank')} 
+                      <img
+                        key={idx}
+                        src={screenshot}
+                        alt={`Screenshot ${idx + 1}`}
+                        style={{ width: '50px', marginRight: '5px', cursor: 'pointer' }}
+                        onClick={() => window.open(screenshot, '_blank')}
                       />
                     ))
                   ) : (

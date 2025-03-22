@@ -188,14 +188,24 @@ const TestPage = () => {
 
   const handleTestSubmission = async () => {
     try {
-      const updatedCheatingLog = { ...cheatingLog, username: userInfo.name, email: userInfo.email, screenshots: cheatingLog.screenshots ? [cheatingLog.screenshot] : [] // Corrected line
-    };
-      await saveCheatingLogMutation(updatedCheatingLog).unwrap();
-
-      toast.success('User Logs Saved!!');
-      navigate(`/Success`);
+      const updatedCheatingLog = {
+        ...cheatingLog,
+        username: userInfo.name,
+        email: userInfo.email,
+        screenshots: cheatingLog.screenshot ? [cheatingLog.screenshot] : [],
+      };
+  
+      // Save the cheating log
+      const response = await saveCheatingLogMutation(updatedCheatingLog).unwrap();
+  
+      if (response) {
+        toast.success('User Logs Saved!!');
+        navigate('/Success');
+      } else {
+        toast.error('Failed to save logs.');
+      }
     } catch (error) {
-      console.error('Cheating log save error: ', error);
+      console.error('Cheating log save error:', error);
       toast.error('Error saving logs.');
     }
   };
@@ -207,26 +217,45 @@ const TestPage = () => {
   const handleScreenshotCapture = (imageSrc) => {
     setCheatingLog((prevLog) => ({
       ...prevLog,
-      screenshot: [...prevLog.screenshot, imageSrc], // Add each new screenshot
+      screenshots: [...(prevLog.screenshots || []), imageSrc], // Ensure screenshots is an array
     }));
   };
   
 
-  const handleObjectDetected = (objectType) => {
-    if (objectType === 'cell phone') {
-      setCheatingLog((prevLog) => ({
-        ...prevLog,
-        cellPhoneCount: prevLog.cellPhoneCount + 1,
-      }));
-      toast.warn("Cell phone detected! Screenshot captured.");
-    } else if (objectType === 'multiple faces') {
-      setCheatingLog((prevLog) => ({
-        ...prevLog,
-        multipleFaceCount: prevLog.multipleFaceCount + 1,
-      }));
-      toast.warn("Multiple faces detected! Screenshot captured.");
+const handleObjectDetected = async (objectType) => {
+  let updatedCheatingLog = { ...cheatingLog };
+
+  if (objectType === 'cell phone') {
+    updatedCheatingLog.cellPhoneCount += 1;
+    toast.warn('Cell phone detected! Screenshot captured.');
+  } else if (objectType === 'multiple faces') {
+    updatedCheatingLog.multipleFaceCount += 1;
+    toast.warn('Multiple faces detected! Screenshot captured.');
+  } else if (objectType === 'no face') {
+    updatedCheatingLog.noFaceCount += 1;
+    toast.warn('No face detected! Screenshot captured.');
+  }
+
+  // Update the state
+  setCheatingLog(updatedCheatingLog);
+
+  // Save the updated log to the backend
+  try {
+    const response = await saveCheatingLogMutation({
+      ...updatedCheatingLog,
+      username: userInfo.name,
+      email: userInfo.email,
+    }).unwrap();
+
+    if (response) {
+      console.log('Cheating log updated successfully:', response);
     }
-  };
+  } catch (error) {
+    console.error('Error updating cheating log:', error);
+    toast.error('Error updating cheating log.');
+  }
+};
+
 
   return (
     <PageContainer title="TestPage" description="This is TestPage">

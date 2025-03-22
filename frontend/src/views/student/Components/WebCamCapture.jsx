@@ -166,11 +166,13 @@
 import React, { useRef, useEffect, useState } from 'react';
 import * as cocoSsd from "@tensorflow-models/coco-ssd";
 import "@tensorflow/tfjs";
+import { Snackbar, Alert } from '@mui/material';
 
 const WebCamCapture = ({ onCapture, onObjectDetected, examId, email, username }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [model, setModel] = useState(null);
+  const [notification, setNotification] = useState({ message: '', open: false });
 
   useEffect(() => {
     const loadModel = async () => {
@@ -225,7 +227,7 @@ const WebCamCapture = ({ onCapture, onObjectDetected, examId, email, username })
     formData.append('username', username);
     formData.append('email', email);
     formData.append('examId', examId);
-  
+
     fetch('/api/save-screenshot', {
       method: 'POST',
       body: formData,
@@ -234,7 +236,7 @@ const WebCamCapture = ({ onCapture, onObjectDetected, examId, email, username })
       .then(data => console.log('Screenshot saved successfully:', data))
       .catch(error => console.error('Error saving screenshot:', error));
   };
-  
+
   // Function to convert dataURL to File
   const dataURLtoFile = (dataUrl, fileName) => {
     const arr = dataUrl.split(',');
@@ -247,7 +249,10 @@ const WebCamCapture = ({ onCapture, onObjectDetected, examId, email, username })
     }
     return new File([u8arr], fileName, { type: mime });
   };
-  
+
+  const showNotification = (message) => {
+    setNotification({ message, open: true });
+  };
 
   const detectObjects = async () => {
     if (!model || !videoRef.current) return;
@@ -272,22 +277,22 @@ const WebCamCapture = ({ onCapture, onObjectDetected, examId, email, username })
 
       if (mobileDetected) {
         console.log("📱 Mobile phone detected!");
-        alert("📱 Mobile phone detected!"); // Immediate alert
         onObjectDetected("Mobile detected!");
+        showNotification("📱 Mobile phone detected!");
         captureScreenshot();
       }
 
       if (facesDetected > 1) {
         console.log("👥 Multiple faces detected!");
-        alert("👥 Multiple faces detected!"); // Immediate alert
         onObjectDetected("Multiple faces detected!");
+        showNotification("👥 Multiple faces detected!");
         captureScreenshot();
       }
 
       if (facesDetected === 0) {
         console.log("🚫 No face detected!");
-        alert("🚫 No face detected!"); // Immediate alert
         onObjectDetected("No face detected!");
+        showNotification("🚫 No face detected!");
         captureScreenshot();
       }
     } catch (error) {
@@ -309,11 +314,25 @@ const WebCamCapture = ({ onCapture, onObjectDetected, examId, email, username })
     <div>
       <video ref={videoRef} autoPlay style={{ width: '100%' }} />
       <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+      {/* Snackbar for popup message */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={3000} // Close after 3 seconds
+        onClose={() => setNotification({ ...notification, open: false })}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setNotification({ ...notification, open: false })} severity="warning" sx={{ width: '100%' }}>
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };
 
 export default WebCamCapture;
+
+
 
 
 
