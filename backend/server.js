@@ -80,6 +80,8 @@ app.post('api/exams/tab-switch', (req, res)=>{
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/users", examRoutes);
+// app.use('/api', require('./routes/examRoutes'));
+
 
 // we we are deploying this in production
 // make frontend build then

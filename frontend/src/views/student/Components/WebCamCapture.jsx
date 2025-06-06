@@ -312,7 +312,7 @@ const WebCamCapture = ({ onCapture, onObjectDetected, examId, email, username })
 
   return (
     <div>
-      <video ref={videoRef} autoPlay style={{ width: '100%' }} />
+      <video ref={videoRef} autoPlay style={{ width: '50%', height:'30%'}} />
       <canvas ref={canvasRef} style={{ display: 'none' }} />
 
       {/* Snackbar for popup message */}
